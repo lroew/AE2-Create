@@ -1,0 +1,30 @@
+feat/ae2-create-compat-39217581:
+  push:
+    - name: Build
+      runner:
+        cpus: 2
+      docker:
+        image: eclipse-temurin:21-jdk
+      stages:
+        - name: build
+          script:
+            - chmod +x gradlew
+            - ./gradlew build
+          artifacts:
+            - name: jar-files
+              path: build/libs/*.jar
+
+  pull_request:
+    - name: Build
+      runner:
+        cpus: 2
+      docker:
+        image: eclipse-temurin:21-jdk
+      stages:
+        - name: build
+          script:
+            - chmod +x gradlew
+            - ./gradlew build
+          artifacts:
+            - name: jar-files
+              path: build/libs/*.jar
