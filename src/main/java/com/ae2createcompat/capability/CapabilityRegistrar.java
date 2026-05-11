@@ -4,12 +4,12 @@ import com.ae2createcompat.AE2CreateCompat;
 import com.ae2createcompat.block.ModBlocks;
 import com.ae2createcompat.blockentity.MEExporterBlockEntity;
 import com.ae2createcompat.blockentity.MEImporterBlockEntity;
+import com.ae2createcompat.blockentity.ModBlockEntities;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * 能力注册器 - 将 AE2 的存储能力桥接到 Create 的物品处理系统。
@@ -30,15 +30,15 @@ public class CapabilityRegistrar {
         // ME Exporter: 对外暴露 IItemHandler，让 Create 设备可以从 ME Exporter 中提取物品
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
-                ModBlockEntities.ME_EXPORTER_BE.get(),
-                (be, side) -> new MEExporterItemHandler(be)
+                ModBlockEntities.ME_EXPORTER.get(),
+                (be, side) -> new MEExporterItemHandler((MEExporterBlockEntity) be)
         );
 
         // ME Importer: 对外暴露 IItemHandler，让 Create 设备可以向 ME Importer 中插入物品
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
-                ModBlockEntities.ME_IMPORTER_BE.get(),
-                (be, side) -> new MEImporterItemHandler(be)
+                ModBlockEntities.ME_IMPORTER.get(),
+                (be, side) -> new MEImporterItemHandler((MEImporterBlockEntity) be)
         );
     }
 
@@ -78,6 +78,11 @@ public class CapabilityRegistrar {
         public int getSlotLimit(int slot) {
             return 64;
         }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false; // 导出器不接受输入
+        }
     }
 
     /**
@@ -114,6 +119,11 @@ public class CapabilityRegistrar {
         @Override
         public int getSlotLimit(int slot) {
             return 64;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return true; // 接受所有物品
         }
     }
 }

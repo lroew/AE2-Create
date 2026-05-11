@@ -1,18 +1,20 @@
 package com.ae2createcompat.blockentity;
 
-import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.GenericStack;
 import appeng.api.storage.MEStorage;
 import appeng.me.helpers.BlockEntityNodeListener;
 import appeng.me.helpers.IGridConnectedBlockEntity;
+import appeng.me.ManagedGridNode;
 import com.ae2createcompat.AE2CreateCompat;
+import com.ae2createcompat.block.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -20,10 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * ME Exporter - 从 AE2 网络中提取物品并通过 Create 的物品管道/传送带输出。
@@ -35,8 +34,8 @@ import java.util.List;
  */
 public class MEExporterBlockEntity extends BlockEntity implements IGridConnectedBlockEntity {
 
-    private IGridNode mainNode;
-    private final InternalInventory buffer = InternalInventory.empty();
+    private final Runnable tickCallback = this::serverTick;
+    private final IManagedGridNode mainNode = new ManagedGridNode(this, BlockEntityNodeListener.INSTANCE);
     private AEItemKey requestedItem = null;
     private long requestAmount = 64;
     private int tickCounter = 0;
@@ -44,35 +43,40 @@ public class MEExporterBlockEntity extends BlockEntity implements IGridConnected
 
     public MEExporterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        mainNode.setInWorldNode(true);
     }
 
     @Override
-    public IGridNode getGridNode(Direction dir) {
-        return getMainNode();
+    public IGridNode getGridNode(@Nullable Direction dir) {
+        return mainNode.getNode();
     }
 
     @Override
-    public IGridNode getMainNode() {
-        if (mainNode == null) {
-            mainNode = BlockEntityNodeListener.createNode(this, null);
-        }
+    public IManagedGridNode getMainNode() {
         return mainNode;
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    public void saveChanges() {
+        setChanged();
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
+        mainNode.saveToNBT(tag);
         if (requestedItem != null) {
-            tag.put("requestedItem", requestedItem.toTagGeneric());
+            tag.put("requestedItem", requestedItem.toTag(provider));
         }
         tag.putLong("requestAmount", requestAmount);
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
+        mainNode.loadFromNBT(tag);
         if (tag.contains("requestedItem")) {
-            requestedItem = AEItemKey.fromTagGeneric(tag.getCompound("requestedItem"));
+            requestedItem = AEItemKey.fromTag(provider, tag.getCompound("requestedItem"));
         }
         requestAmount = tag.getLong("requestAmount");
         if (requestAmount <= 0) requestAmount = 64;
@@ -85,19 +89,17 @@ public class MEExporterBlockEntity extends BlockEntity implements IGridConnected
         if (tickCounter < EXPORT_INTERVAL) return;
         tickCounter = 0;
 
-        IGrid grid = null;
-        IGridNode node = getMainNode();
-        if (node != null) {
-            grid = node.getGrid();
-        }
+        if (!mainNode.isReady()) return;
+
+        IGrid grid = mainNode.getGrid();
         if (grid == null) return;
 
-        IStorageService storageService = grid.getCraftingService().getGrid();
+        IStorageService storageService = grid.getService(IStorageService.class);
         MEStorage meStorage = storageService.getInventory();
 
         // 从 ME 网络中提取请求的物品
         if (requestedItem != null) {
-            var extracted = meStorage.extract(requestedItem, requestAmount, net.minecraft.world.level.block.entity.BlockEntityWrapper.EMPTY, null);
+            var extracted = meStorage.extract(requestedItem, requestAmount, appeng.api.config.Actionable.MODULATE, new appeng.me.helpers.BaseActionSource());
             if (extracted > 0) {
                 ItemStack stack = requestedItem.toStack((int) Math.min(extracted, Integer.MAX_VALUE));
                 // 尝试推送到相邻的 Create 物品管道或其他容器
@@ -118,7 +120,8 @@ public class MEExporterBlockEntity extends BlockEntity implements IGridConnected
             var be = level.getBlockEntity(neighborPos);
             if (be == null) continue;
 
-            IItemHandler handler = be.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, dir.getOpposite()).orElse(null);
+            IItemHandler handler = net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK.getCapability(
+                    level, neighborPos, level.getBlockState(neighborPos), be, dir.getOpposite());
             if (handler != null) {
                 ItemStack remainder = ItemHandlerHelper.insertItemStacked(handler, stack, false);
                 if (remainder.isEmpty()) return; // 全部插入成功
@@ -144,16 +147,19 @@ public class MEExporterBlockEntity extends BlockEntity implements IGridConnected
         return requestAmount;
     }
 
-    public void clearNode() {
-        if (mainNode != null) {
-            mainNode.destroy();
-            mainNode = null;
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+        if (!level.isClientSide) {
+            mainNode.create(level, worldPosition);
+            ModBlocks.registerTickCallback(tickCallback);
         }
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
-        clearNode();
+        mainNode.destroy();
+        ModBlocks.unregisterTickCallback(tickCallback);
     }
 }

@@ -1,25 +1,28 @@
 package com.ae2createcompat.blockentity;
 
-import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.crafting.ICraftingService;
-import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.MEStorage;
-import appeng.crafting.pattern.IPatternDetails;
+import appeng.api.crafting.IPatternDetails;
 import appeng.me.helpers.BlockEntityNodeListener;
 import appeng.me.helpers.IGridConnectedBlockEntity;
+import appeng.me.ManagedGridNode;
 import com.ae2createcompat.AE2CreateCompat;
+import com.ae2createcompat.block.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -39,7 +42,8 @@ import java.util.List;
  */
 public class MEPatternProviderBlockEntity extends BlockEntity implements IGridConnectedBlockEntity {
 
-    private IGridNode mainNode;
+    private final Runnable tickCallback = this::serverTick;
+    private final IManagedGridNode mainNode = new ManagedGridNode(this, BlockEntityNodeListener.INSTANCE);
     private ItemStack[] inputBuffer = new ItemStack[9]; // 合成输入缓冲区
     private ItemStack[] outputBuffer = new ItemStack[9]; // 合成输出缓冲区
     private boolean isActive = false;
@@ -48,20 +52,23 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
 
     public MEPatternProviderBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        mainNode.setInWorldNode(true);
         clearBuffers();
     }
 
     @Override
-    public IGridNode getGridNode(Direction dir) {
-        return getMainNode();
+    public IGridNode getGridNode(@Nullable Direction dir) {
+        return mainNode.getNode();
     }
 
     @Override
-    public IGridNode getMainNode() {
-        if (mainNode == null) {
-            mainNode = BlockEntityNodeListener.createNode(this, null);
-        }
+    public IManagedGridNode getMainNode() {
         return mainNode;
+    }
+
+    @Override
+    public void saveChanges() {
+        setChanged();
     }
 
     private void clearBuffers() {
@@ -72,15 +79,16 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
+        mainNode.saveToNBT(tag);
         tag.putBoolean("isActive", isActive);
         tag.putInt("processingTicks", processingTicks);
         // Save input/output buffers
         CompoundTag inputTag = new CompoundTag();
         for (int i = 0; i < inputBuffer.length; i++) {
             if (!inputBuffer[i].isEmpty()) {
-                inputTag.put("slot" + i, inputBuffer[i].save(new CompoundTag()));
+                inputTag.put("slot" + i, inputBuffer[i].save(provider));
             }
         }
         tag.put("inputBuffer", inputTag);
@@ -88,28 +96,29 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
         CompoundTag outputTag = new CompoundTag();
         for (int i = 0; i < outputBuffer.length; i++) {
             if (!outputBuffer[i].isEmpty()) {
-                outputTag.put("slot" + i, outputBuffer[i].save(new CompoundTag()));
+                outputTag.put("slot" + i, outputBuffer[i].save(provider));
             }
         }
         tag.put("outputBuffer", outputTag);
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
+        mainNode.loadFromNBT(tag);
         isActive = tag.getBoolean("isActive");
         processingTicks = tag.getInt("processingTicks");
 
         CompoundTag inputTag = tag.getCompound("inputBuffer");
         for (int i = 0; i < inputBuffer.length; i++) {
             inputBuffer[i] = inputTag.contains("slot" + i) ?
-                    ItemStack.of(inputTag.getCompound("slot" + i)) : ItemStack.EMPTY;
+                    ItemStack.parseOptional(provider, inputTag.getCompound("slot" + i)) : ItemStack.EMPTY;
         }
 
         CompoundTag outputTag = tag.getCompound("outputBuffer");
         for (int i = 0; i < outputBuffer.length; i++) {
             outputBuffer[i] = outputTag.contains("slot" + i) ?
-                    ItemStack.of(outputTag.getCompound("slot" + i)) : ItemStack.EMPTY;
+                    ItemStack.parseOptional(provider, outputTag.getCompound("slot" + i)) : ItemStack.EMPTY;
         }
     }
 
@@ -119,11 +128,9 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
     public void serverTick() {
         if (level == null || level.isClientSide) return;
 
-        IGrid grid = null;
-        IGridNode node = getMainNode();
-        if (node != null) {
-            grid = node.getGrid();
-        }
+        if (!mainNode.isReady()) return;
+
+        IGrid grid = mainNode.getGrid();
         if (grid == null) return;
 
         // 阶段1: 尝试将输出缓冲区中的产物注入 AE2 网络
@@ -163,10 +170,7 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
      */
     private void requestPatternFromAE(IGrid grid) {
         try {
-            ICraftingService craftingService = grid.getCraftingService();
-            // 尝试从合成队列中获取下一个待处理的合成任务
-            // AE2 的 crafting service 提供了合成管理功能
-            // 这里通过 API 接口获取待推送的合成模式
+            ICraftingService craftingService = grid.getService(ICraftingService.class);
             AE2CreateCompat.LOGGER.debug("Requesting pattern from AE2 crafting service");
             // 实际实现需要通过 AE2 的 IPatternDetails 接口获取模式详情
         } catch (Exception e) {
@@ -185,14 +189,13 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
             var be = level.getBlockEntity(neighborPos);
             if (be == null) continue;
 
-            IItemHandler handler = be.getCapability(
-                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
-                    dir.getOpposite()).orElse(null);
+            IItemHandler handler = net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK.getCapability(
+                    level, neighborPos, level.getBlockState(neighborPos), be, dir.getOpposite());
             if (handler == null) continue;
 
             for (int i = 0; i < inputBuffer.length; i++) {
                 if (inputBuffer[i].isEmpty()) continue;
-                ItemStack remainder = net.neoforged.neoforge.items.ItemHandlerHelper
+                ItemStack remainder = ItemHandlerHelper
                         .insertItemStacked(handler, inputBuffer[i], false);
                 inputBuffer[i] = remainder;
                 if (!remainder.isEmpty()) allPushed = false;
@@ -211,9 +214,8 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
             var be = level.getBlockEntity(neighborPos);
             if (be == null) continue;
 
-            IItemHandler handler = be.getCapability(
-                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
-                    dir.getOpposite()).orElse(null);
+            IItemHandler handler = net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK.getCapability(
+                    level, neighborPos, level.getBlockState(neighborPos), be, dir.getOpposite());
             if (handler == null) continue;
 
             for (int slot = 0; slot < handler.getSlots(); slot++) {
@@ -239,7 +241,7 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
                 }
                 // 放不下的放回
                 if (!extracted.isEmpty()) {
-                    net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(handler, extracted, false);
+                    ItemHandlerHelper.insertItemStacked(handler, extracted, false);
                 }
             }
         }
@@ -249,7 +251,7 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
      * 将输出缓冲区的产物注入回 AE2 ME 网络
      */
     private void injectOutputsToME(IGrid grid) {
-        IStorageService storageService = grid.getCraftingService().getGrid();
+        IStorageService storageService = grid.getService(IStorageService.class);
         MEStorage meStorage = storageService.getInventory();
 
         for (int i = 0; i < outputBuffer.length; i++) {
@@ -280,7 +282,6 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
     }
 
     private boolean isOutputComplete() {
-        // 判断输出是否已收集完成（具体逻辑取决于模式定义）
         return hasItemsInOutputBuffer();
     }
 
@@ -296,16 +297,19 @@ public class MEPatternProviderBlockEntity extends BlockEntity implements IGridCo
         return outputBuffer;
     }
 
-    public void clearNode() {
-        if (mainNode != null) {
-            mainNode.destroy();
-            mainNode = null;
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+        if (!level.isClientSide) {
+            mainNode.create(level, worldPosition);
+            ModBlocks.registerTickCallback(tickCallback);
         }
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
-        clearNode();
+        mainNode.destroy();
+        ModBlocks.unregisterTickCallback(tickCallback);
     }
 }

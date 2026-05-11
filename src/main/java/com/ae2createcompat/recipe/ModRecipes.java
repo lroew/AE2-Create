@@ -3,14 +3,17 @@ package com.ae2createcompat.recipe;
 import com.ae2createcompat.AE2CreateCompat;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -39,9 +42,15 @@ public class ModRecipes {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<MEPatternRecipe>> ME_PATTERN_RECIPE_SERIALIZER =
             RECIPE_SERIALIZERS.register("me_pattern", () -> new RecipeSerializer<>() {
                 private static final MapCodec<MEPatternRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-                        ItemStack.ITEM_CODEC.fieldOf("output").forGetter(MEPatternRecipe::getOutput),
-                        ItemStack.ITEM_CODEC.listOf().fieldOf("inputs").forGetter(MEPatternRecipe::getInputs)
+                        ItemStack.SIMPLE_ITEM_CODEC.fieldOf("output").forGetter(MEPatternRecipe::getOutput),
+                        ItemStack.SIMPLE_ITEM_CODEC.listOf().fieldOf("inputs").forGetter(MEPatternRecipe::getInputs)
                 ).apply(inst, MEPatternRecipe::new));
+
+                private static final StreamCodec<RegistryFriendlyByteBuf, MEPatternRecipe> STREAM_CODEC =
+                        StreamCodec.of(
+                                ModRecipes::encodeToNetwork,
+                                ModRecipes::decodeFromNetwork
+                        );
 
                 @Override
                 public MapCodec<MEPatternRecipe> codec() {
@@ -49,15 +58,28 @@ public class ModRecipes {
                 }
 
                 @Override
-                public void toNetwork(net.minecraft.network.FriendlyByteBuf buf, MEPatternRecipe recipe) {
-                    // Network serialization
-                }
-
-                @Override
-                public MEPatternRecipe fromNetwork(net.minecraft.network.FriendlyByteBuf buf) {
-                    return null;
+                public StreamCodec<RegistryFriendlyByteBuf, MEPatternRecipe> streamCodec() {
+                    return STREAM_CODEC;
                 }
             });
+
+    private static void encodeToNetwork(RegistryFriendlyByteBuf buf, MEPatternRecipe recipe) {
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, recipe.getOutput());
+        buf.writeVarInt(recipe.getInputs().size());
+        for (ItemStack input : recipe.getInputs()) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, input);
+        }
+    }
+
+    private static MEPatternRecipe decodeFromNetwork(RegistryFriendlyByteBuf buf) {
+        ItemStack output = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
+        int size = buf.readVarInt();
+        java.util.List<ItemStack> inputs = new java.util.ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            inputs.add(ItemStack.OPTIONAL_STREAM_CODEC.decode(buf));
+        }
+        return new MEPatternRecipe(output, inputs);
+    }
 
     /**
      * ME 合成模式配方 - 定义一种 AE2 合成模式到 Create 加工设备的映射
@@ -82,12 +104,12 @@ public class ModRecipes {
         }
 
         @Override
-        public boolean matches(RecipeInput input, net.minecraft.world.level.Level level) {
+        public boolean matches(RecipeInput input, Level level) {
             return true; // 自定义匹配逻辑
         }
 
         @Override
-        public ItemStack assemble(RecipeInput input, net.minecraft.server.level.ServerLevel level) {
+        public ItemStack assemble(RecipeInput input, HolderLookup.Provider registries) {
             return output.copy();
         }
 
@@ -97,7 +119,7 @@ public class ModRecipes {
         }
 
         @Override
-        public ItemStack getResultItem(net.minecraft.core.registries.BuiltInRegistries registries) {
+        public ItemStack getResultItem(HolderLookup.Provider registries) {
             return output;
         }
 

@@ -65,9 +65,12 @@ dependencies {
     compileOnly "appeng:appliedenergistics2-neoforge:${ae2_version}"
     localRuntime "appeng:appliedenergistics2-neoforge:${ae2_version}"
 
-    // Create - 机械动力 (compileOnly for API, localRuntime for testing)
-    compileOnly "com.simibubi.create:create-${mc_version}:${create_version}:all"
-    localRuntime "com.simibubi.create:create-${mc_version}:${create_version}:all"
+    // Create - 机械动力 (localRuntime only, no compile-time API dependency)
+    // Note: Create classes are not directly imported; compatibility is handled via
+    // NeoForge capabilities and runtime Class.forName() detection.
+    // The maven.createmod.com repository may be blocked by Cloudflare in some
+    // environments, so we only include this as localRuntime (non-blocking).
+    localRuntime "com.simibubi.create:create-${minecraft_version}:${create_version}:all"
     localRuntime "com.tterrag.registrate:Registrate:${registrate_version}"
 }
 
