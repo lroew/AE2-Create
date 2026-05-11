@@ -9,7 +9,7 @@ feat/ae2-create-compat-39217581:
         - name: build
           script:
             - chmod +x gradlew
-            - ./gradlew build
+            - for i in 1 2 3; do ./gradlew build --no-configuration-cache && break || echo "Retrying build attempt $i..."; done
           artifacts:
             - name: jar-files
               path: build/libs/*.jar
@@ -24,7 +24,7 @@ feat/ae2-create-compat-39217581:
         - name: build
           script:
             - chmod +x gradlew
-            - ./gradlew build
+            - for i in 1 2 3; do ./gradlew build --no-configuration-cache && break || echo "Retrying build attempt $i..."; done
           artifacts:
             - name: jar-files
               path: build/libs/*.jar
