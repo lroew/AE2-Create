@@ -1,0 +1,18 @@
+{
+  "block.ae2createcompat.me_exporter": "ME Exporter",
+  "block.ae2createcompat.me_importer": "ME Importer",
+  "block.ae2createcompat.me_pattern_provider": "ME Pattern Provider",
+
+  "item.ae2createcompat.me_exporter": "ME Exporter",
+  "item.ae2createcompat.me_importer": "ME Importer",
+  "item.ae2createcompat.me_pattern_provider": "ME Pattern Provider",
+
+  "block.ae2createcompat.me_exporter.tooltip": "从 ME 网络导出物品到 Create 管道",
+  "block.ae2createcompat.me_importer.tooltip": "从 Create 管道导入物品到 ME 网络",
+  "block.ae2createcompat.me_pattern_provider.tooltip": "通过 Create 设备驱动 AE2 自动合成",
+
+  "ae2createcompat.subtitle.connected": "ME 网络已连接",
+  "ae2createcompat.subtitle.disconnected": "ME 网络已断开",
+  "ae2createcompat.subtitle.export": "物品已导出",
+  "ae2createcompat.subtitle.import": "物品已导入"
+}
