@@ -18,7 +18,7 @@ sourceSets.main.resources {
 }
 
 repositories {
-    maven { url = 'https://maven.createmod.com' }
+    maven { url = 'https://maven.createmod.net' } // Create, Flywheel, Ponder
     maven { url = 'https://modmaven.dev' }
 }
 
@@ -65,12 +65,11 @@ dependencies {
     compileOnly "appeng:appliedenergistics2-neoforge:${ae2_version}"
     localRuntime "appeng:appliedenergistics2-neoforge:${ae2_version}"
 
-    // Create - 机械动力 (localRuntime only, no compile-time API dependency)
-    // Note: Create classes are not directly imported; compatibility is handled via
-    // NeoForge capabilities and runtime Class.forName() detection.
-    // The maven.createmod.com repository may be blocked by Cloudflare in some
-    // environments, so we only include this as localRuntime (non-blocking).
-    localRuntime "com.simibubi.create:create-${minecraft_version}:${create_version}:all"
+    // Create 6.x - 机械动力 (compileOnly slim for API, localRuntime for testing)
+    compileOnly "com.simibubi.create:create-${minecraft_version}:${create_version}:slim"
+    localRuntime "com.simibubi.create:create-${minecraft_version}:${create_version}"
+    localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
+    localRuntime "net.createmod.ponder:ponder-neoforge:${ponder_version}"
     localRuntime "com.tterrag.registrate:Registrate:${registrate_version}"
 }
 
