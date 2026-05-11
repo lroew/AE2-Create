@@ -1,30 +1,50 @@
 feat/ae2-create-compat-39217581:
-  push:
+  push: &build
     - name: Build
-      runner:
-        cpus: 2
+      retry: 1
       docker:
         image: eclipse-temurin:21-jdk
+        volumes:
+          - /root/.gradle
       stages:
-        - name: build
-          script:
-            - chmod +x gradlew
-            - for i in 1 2 3; do ./gradlew build --no-configuration-cache && break || echo "Retrying build attempt $i..."; done
-          artifacts:
-            - name: jar-files
-              path: build/libs/*.jar
+        - name: Make Gradle wrapper executable
+          script: chmod +x ./gradlew
+        - name: Build with Gradle
+          script: ./gradlew build
+          timeout: 10m
+        - name: Upload build artifacts
+          image: cnbcool/attachments:latest
+          allowFailure: true
+          settings:
+            attachments:
+              - build/libs/*.jar
+  pull_request: *build
 
-  pull_request:
-    - name: Build
-      runner:
-        cpus: 2
+$:
+  tag_push:
+    - name: Build and Release
+      retry: 1
       docker:
         image: eclipse-temurin:21-jdk
+        volumes:
+          - /root/.gradle
       stages:
-        - name: build
-          script:
-            - chmod +x gradlew
-            - for i in 1 2 3; do ./gradlew build --no-configuration-cache && break || echo "Retrying build attempt $i..."; done
-          artifacts:
-            - name: jar-files
-              path: build/libs/*.jar
+        - name: Make Gradle wrapper executable
+          script: chmod +x ./gradlew
+        - name: Build with Gradle
+          script: ./gradlew build
+          timeout: 10m
+        - name: Generate changelog
+          image: cnbcool/changelog:latest
+          settings:
+            latestChangeLogTarget: LATEST_CHANGELOG.md
+        - name: Create Release
+          type: git:release
+          options:
+            title: $CNB_BRANCH
+            descriptionFromFile: LATEST_CHANGELOG.md
+        - name: Upload build artifacts
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - build/libs/*.jar
