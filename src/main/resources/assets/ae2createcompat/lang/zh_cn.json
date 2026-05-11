@@ -1,0 +1,23 @@
+{
+  "block.ae2createcompat.me_exporter": "ME 导出器",
+  "block.ae2createcompat.me_importer": "ME 导入器",
+  "block.ae2createcompat.me_pattern_provider": "ME 合成模式提供器",
+
+  "item.ae2createcompat.me_exporter": "ME 导出器",
+  "item.ae2createcompat.me_importer": "ME 导入器",
+  "item.ae2createcompat.me_pattern_provider": "ME 合成模式提供器",
+
+  "block.ae2createcompat.me_exporter.tooltip": "从 ME 网络导出物品到 Create 管道/传送带",
+  "block.ae2createcompat.me_importer.tooltip": "从 Create 管道/传送带导入物品到 ME 网络",
+  "block.ae2createcompat.me_pattern_provider.tooltip": "通过 Create 设备驱动 AE2 的自动化合成",
+
+  "ae2createcompat.subtitle.connected": "ME 网络已连接",
+  "ae2createcompat.subtitle.disconnected": "ME 网络已断开",
+  "ae2createcompat.subtitle.export": "物品已导出",
+  "ae2createcompat.subtitle.import": "物品已导入",
+
+  "ae2createcompat.jei_category.me_pattern": "ME 合成模式",
+  "ae2createcompat.message.no_grid": "未连接到 ME 网络",
+  "ae2createcompat.message.filter_set": "过滤器已设置",
+  "ae2createcompat.message.pattern_active": "合成模式已激活"
+}
