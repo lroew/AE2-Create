@@ -18,8 +18,9 @@ sourceSets.main.resources {
 }
 
 repositories {
-    maven { url = 'https://maven.createmod.net' } // Create, Flywheel, Ponder
+    maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
     maven { url = 'https://modmaven.dev' }
+    maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
 }
 
 base {
@@ -66,11 +67,11 @@ dependencies {
     localRuntime "appeng:appliedenergistics2-neoforge:${ae2_version}"
 
     // Create 6.x - 机械动力 (compileOnly slim for API, localRuntime for testing)
-    compileOnly "com.simibubi.create:create-${minecraft_version}:${create_version}:slim"
-    localRuntime "com.simibubi.create:create-${minecraft_version}:${create_version}"
-    localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
-    localRuntime "net.createmod.ponder:ponder-neoforge:${ponder_version}"
-    localRuntime "com.tterrag.registrate:Registrate:${registrate_version}"
+    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
+    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
+    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
 }
 
 tasks.withType(ProcessResources).configureEach {
