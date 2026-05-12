@@ -1,4 +1,4 @@
-feat/ae2-create-compat-39217581:
+main:
   push: &build
     - name: Build
       retry: 1
