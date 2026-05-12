@@ -18,9 +18,9 @@ sourceSets.main.resources {
 }
 
 repositories {
+    mavenCentral() // AE2
     maven { url = 'https://maven.createmod.net' } // Create, Ponder, Flywheel
     maven { url = 'https://maven.ithundxr.dev/snapshots' } // Registrate
-    maven { url = 'https://modmaven.dev' }
 }
 
 base {
@@ -62,9 +62,9 @@ configurations {
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    // AE2 - Applied Energistics 2 (compileOnly for API, localRuntime for testing)
-    compileOnly "appeng:appliedenergistics2-neoforge:${ae2_version}"
-    localRuntime "appeng:appliedenergistics2-neoforge:${ae2_version}"
+    // AE2 - Applied Energistics 2 (使用完整 jar，代码引用了 appeng.me.* 内部实现类)
+    compileOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+    localRuntime "org.appliedenergistics:appliedenergistics2:${ae2_version}"
 
     // Create 6.x - 机械动力 (官方配置)
     implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
