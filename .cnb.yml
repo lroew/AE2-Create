@@ -2,6 +2,7 @@ main:
   push: &build
     - name: Build
       retry: 1
+      runner: { cpus: 4 }
       docker:
         image: eclipse-temurin:21-jdk
         volumes:
@@ -11,7 +12,7 @@ main:
           script: chmod +x ./gradlew
         - name: Build with Gradle
           script: ./gradlew build
-          timeout: 10m
+          timeout: 30m
         - name: Upload build artifacts
           image: cnbcool/attachments:latest
           allowFailure: true
@@ -33,7 +34,7 @@ $:
           script: chmod +x ./gradlew
         - name: Build with Gradle
           script: ./gradlew build
-          timeout: 10m
+          timeout: 30m
         - name: Generate changelog
           image: cnbcool/changelog:latest
           settings:
