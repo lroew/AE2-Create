@@ -1,6 +1,7 @@
 package com.ae2createcompat.blockentity;
 
 import com.ae2createcompat.AE2CreateCompat;
+import com.ae2createcompat.block.ModBlocks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;

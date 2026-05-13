@@ -1,6 +1,7 @@
 package com.ae2createcompat.recipe;
 
 import com.ae2createcompat.AE2CreateCompat;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.HolderLookup;
@@ -60,7 +61,7 @@ public class ModRecipes {
                 private static final MapCodec<MEPatternRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
                         ItemStack.SIMPLE_ITEM_CODEC.fieldOf("output").forGetter(MEPatternRecipe::getOutput),
                         ItemStack.SIMPLE_ITEM_CODEC.listOf().fieldOf("inputs").forGetter(MEPatternRecipe::getInputs),
-                        net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8.optionalFieldOf("processing_type", "CRAFTING")
+                        Codec.STRING.optionalFieldOf("processing_type", "CRAFTING")
                                 .forGetter(MEPatternRecipe::getProcessingType)
                 ).apply(inst, MEPatternRecipe::new));
 

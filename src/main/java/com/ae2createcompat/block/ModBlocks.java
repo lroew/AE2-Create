@@ -3,6 +3,7 @@ package com.ae2createcompat.block;
 import com.ae2createcompat.blockentity.MEExporterBlockEntity;
 import com.ae2createcompat.blockentity.MEImporterBlockEntity;
 import com.ae2createcompat.blockentity.MEPatternProviderBlockEntity;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -103,9 +104,16 @@ public class ModBlocks {
      * Base block class for ME Exporter
      */
     public static class MEExporterBlock extends HorizontalDirectionalBlock implements EntityBlock {
+        public static final MapCodec<MEExporterBlock> CODEC = simpleCodec(MEExporterBlock::new);
+
         public MEExporterBlock(Properties properties) {
             super(properties.strength(3.0f, 6.0f));
             registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+            return CODEC;
         }
 
         @Override
@@ -131,7 +139,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, ItemTooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_exporter.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_exporter.tooltip.compat"));
         }
@@ -141,9 +149,16 @@ public class ModBlocks {
      * Base block class for ME Importer
      */
     public static class MEImporterBlock extends HorizontalDirectionalBlock implements EntityBlock {
+        public static final MapCodec<MEImporterBlock> CODEC = simpleCodec(MEImporterBlock::new);
+
         public MEImporterBlock(Properties properties) {
             super(properties.strength(3.0f, 6.0f));
             registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+            return CODEC;
         }
 
         @Override
@@ -169,7 +184,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, ItemTooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_importer.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_importer.tooltip.compat"));
         }
@@ -179,9 +194,16 @@ public class ModBlocks {
      * Base block class for ME Pattern Provider
      */
     public static class MEPatternProviderBlock extends HorizontalDirectionalBlock implements EntityBlock {
+        public static final MapCodec<MEPatternProviderBlock> CODEC = simpleCodec(MEPatternProviderBlock::new);
+
         public MEPatternProviderBlock(Properties properties) {
             super(properties.strength(3.0f, 6.0f));
             registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+            return CODEC;
         }
 
         @Override
@@ -207,7 +229,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, ItemTooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_pattern_provider.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_pattern_provider.tooltip.compat"));
         }
@@ -217,9 +239,16 @@ public class ModBlocks {
      * Base block class for ME Stock Keeper
      */
     public static class MEStockKeeperBlock extends HorizontalDirectionalBlock implements EntityBlock {
+        public static final MapCodec<MEStockKeeperBlock> CODEC = simpleCodec(MEStockKeeperBlock::new);
+
         public MEStockKeeperBlock(Properties properties) {
             super(properties.strength(3.0f, 6.0f));
             registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+            return CODEC;
         }
 
         @Override
@@ -245,7 +274,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, ItemTooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_stock_keeper.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_stock_keeper.tooltip.compat"));
         }

@@ -4,8 +4,8 @@ import com.ae2createcompat.AE2CreateCompat;
 import com.ae2createcompat.blockentity.MEExporterBlockEntity;
 import com.ae2createcompat.blockentity.MEImporterBlockEntity;
 import com.ae2createcompat.blockentity.MEPatternProviderBlockEntity;
-import com.ae2createcompat.blockentity.MEStockKeeperBlockEntity;
 import com.ae2createcompat.blockentity.ModBlockEntities;
+import appeng.api.stacks.AEItemKey;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
@@ -106,7 +106,7 @@ public class CapabilityRegistrar {
             // 允许 Create 设备通过能力接口提取物品
             AEItemKey requested = exporter.getRequestedItem();
             if (requested == null) return ItemStack.EMPTY;
-            if (!ItemStack.isSameItemSameComponents(requested.toStack(1), stack)) return ItemStack.EMPTY;
+            if (!ItemStack.isSameItemSameComponents(requested.toStack(1), getStackInSlot(slot))) return ItemStack.EMPTY;
             // 实际提取由 serverTick 处理，这里返回模拟结果
             return requested.toStack(Math.min(amount, (int) Math.min(exporter.getRequestAmount(), Integer.MAX_VALUE)));
         }

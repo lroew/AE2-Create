@@ -19,8 +19,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.signal.SignalSource;
-import net.minecraft.world.level.signal.SignalTarget;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * - 当数量达到上限时，通过红石信号停止生产线
  * - 与 Create 显示器联动显示库存信息
  */
-public class MEStockKeeperBlockEntity extends BlockEntity implements IGridConnectedBlockEntity, SignalTarget {
+public class MEStockKeeperBlockEntity extends BlockEntity implements IGridConnectedBlockEntity {
 
     private final Runnable tickCallback = this::serverTick;
     private final IManagedGridNode mainNode = new ManagedGridNode(this, BlockEntityNodeListener.INSTANCE);
@@ -175,14 +173,11 @@ public class MEStockKeeperBlockEntity extends BlockEntity implements IGridConnec
         }
     }
 
-    @Override
-    public int getSignal(SignalSource source) {
-        return source == SignalSource.REDSTONE ? redstonePower : 0;
-    }
-
-    @Override
-    public boolean supportsSignal(SignalSource source) {
-        return source == SignalSource.REDSTONE;
+    /**
+     * 获取当前红石信号强度（供外部查询）
+     */
+    public int getOutputSignal() {
+        return redstonePower;
     }
 
     /**
