@@ -28,4 +28,10 @@ public class ModBlockEntities {
                     BlockEntityType.Builder.of((pos, state) ->
                             new MEPatternProviderBlockEntity(ModBlockEntities.ME_PATTERN_PROVIDER.get(), pos, state),
                             ModBlocks.ME_PATTERN_PROVIDER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MEStockKeeperBlockEntity>> ME_STOCK_KEEPER =
+            BLOCK_ENTITIES.register("me_stock_keeper", () ->
+                    BlockEntityType.Builder.of((pos, state) ->
+                            new MEStockKeeperBlockEntity(ModBlockEntities.ME_STOCK_KEEPER.get(), pos, state),
+                            ModBlocks.ME_STOCK_KEEPER.get()).build(null));
 }

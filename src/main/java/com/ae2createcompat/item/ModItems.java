@@ -3,7 +3,6 @@ package com.ae2createcompat.item;
 import com.ae2createcompat.AE2CreateCompat;
 import com.ae2createcompat.block.ModBlocks;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -18,4 +17,7 @@ public class ModItems {
 
     public static final DeferredItem<BlockItem> ME_PATTERN_PROVIDER_ITEM = ITEMS.registerSimpleBlockItem(
             "me_pattern_provider", ModBlocks.ME_PATTERN_PROVIDER);
+
+    public static final DeferredItem<BlockItem> ME_STOCK_KEEPER_ITEM = ITEMS.registerSimpleBlockItem(
+            "me_stock_keeper", ModBlocks.ME_STOCK_KEEPER);
 }

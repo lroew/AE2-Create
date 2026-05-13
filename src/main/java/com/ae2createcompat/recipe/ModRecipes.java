@@ -7,7 +7,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeInput;
@@ -18,7 +17,24 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * 配方类型注册 - 预留 AE2 与 Create 联动的特殊配方系统
+ * 配方类型注册 - AE2 与 Create 联动的特殊配方系统
+ *
+ * ME Pattern Recipe 定义一种 AE2 合成模式到 Create 加工设备的映射：
+ * - 输入: AE2 合成所需的材料列表
+ * - 输出: Create 加工后的产物
+ * - 映射: 使用的 Create 加工设备类型
+ *
+ * 支持的加工类型：
+ * - PRESS: 滚筒压制
+ * - MIXING: 混合器混合
+ * - CUTTING: 切割机切割
+ * - WASHING: 密封风扇洗涤
+ * - DRYING: 密封风扇烘干
+ * - BLASTING: 密封风扇喷射
+ * - HAUNTING: 密封风扇抽气
+ * - FILLING: 翻滚漏斗注入
+ * - DEPLOYING: 发射器操作
+ * - CRAFTING: 装配器合成
  */
 public class ModRecipes {
 
@@ -29,7 +45,7 @@ public class ModRecipes {
             DeferredRegister.create(Registries.RECIPE_SERIALIZER, AE2CreateCompat.MODID);
 
     /**
-     * ME 合成模式配方类型 - 用于定义 AE2 合成模式如何在 Create 设备中处理
+     * ME 合成模式配方类型
      */
     public static final DeferredHolder<RecipeType<?>, RecipeType<MEPatternRecipe>> ME_PATTERN_RECIPE_TYPE =
             RECIPE_TYPES.register("me_pattern", () -> new RecipeType<>() {
@@ -43,7 +59,9 @@ public class ModRecipes {
             RECIPE_SERIALIZERS.register("me_pattern", () -> new RecipeSerializer<>() {
                 private static final MapCodec<MEPatternRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
                         ItemStack.SIMPLE_ITEM_CODEC.fieldOf("output").forGetter(MEPatternRecipe::getOutput),
-                        ItemStack.SIMPLE_ITEM_CODEC.listOf().fieldOf("inputs").forGetter(MEPatternRecipe::getInputs)
+                        ItemStack.SIMPLE_ITEM_CODEC.listOf().fieldOf("inputs").forGetter(MEPatternRecipe::getInputs),
+                        net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8.optionalFieldOf("processing_type", "CRAFTING")
+                                .forGetter(MEPatternRecipe::getProcessingType)
                 ).apply(inst, MEPatternRecipe::new));
 
                 private static final StreamCodec<RegistryFriendlyByteBuf, MEPatternRecipe> STREAM_CODEC =
@@ -69,6 +87,7 @@ public class ModRecipes {
         for (ItemStack input : recipe.getInputs()) {
             ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, input);
         }
+        buf.writeUtf(recipe.getProcessingType());
     }
 
     private static MEPatternRecipe decodeFromNetwork(RegistryFriendlyByteBuf buf) {
@@ -78,21 +97,42 @@ public class ModRecipes {
         for (int i = 0; i < size; i++) {
             inputs.add(ItemStack.OPTIONAL_STREAM_CODEC.decode(buf));
         }
-        return new MEPatternRecipe(output, inputs);
+        String processingType = buf.readUtf();
+        return new MEPatternRecipe(output, inputs, processingType);
     }
 
     /**
-     * ME 合成模式配方 - 定义一种 AE2 合成模式到 Create 加工设备的映射
-     *
-     * 例如：AE2 合成"铁锭" -> Create 滚筒压制（矿石处理）
+     * Create 加工类型常量
+     */
+    public static final class ProcessingTypes {
+        public static final String PRESS = "PRESS";
+        public static final String MIXING = "MIXING";
+        public static final String CUTTING = "CUTTING";
+        public static final String WASHING = "WASHING";
+        public static final String DRYING = "DRYING";
+        public static final String BLASTING = "BLASTING";
+        public static final String HAUNTING = "HAUNTING";
+        public static final String FILLING = "FILLING";
+        public static final String DEPLOYING = "DEPLOYING";
+        public static final String CRAFTING = "CRAFTING";
+    }
+
+    /**
+     * ME 合成模式配方 - 定义 AE2 合成模式到 Create 加工设备的映射
      */
     public static class MEPatternRecipe implements Recipe<RecipeInput> {
         private final ItemStack output;
         private final java.util.List<ItemStack> inputs;
+        private final String processingType;
 
         public MEPatternRecipe(ItemStack output, java.util.List<ItemStack> inputs) {
+            this(output, inputs, ProcessingTypes.CRAFTING);
+        }
+
+        public MEPatternRecipe(ItemStack output, java.util.List<ItemStack> inputs, String processingType) {
             this.output = output;
             this.inputs = inputs;
+            this.processingType = processingType;
         }
 
         public ItemStack getOutput() {
@@ -103,9 +143,13 @@ public class ModRecipes {
             return inputs;
         }
 
+        public String getProcessingType() {
+            return processingType;
+        }
+
         @Override
         public boolean matches(RecipeInput input, Level level) {
-            return true; // 自定义匹配逻辑
+            return true;
         }
 
         @Override
