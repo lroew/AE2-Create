@@ -129,7 +129,7 @@
 - AE2 IGridConnectedBlockEntity 实现 ME 网络连接
 - 状态机模式管理合成流程
 - 可选的 Create 附属 mod 检测，缺失时优雅降级
-- 中英双语资源包
+- 中英资源包
 
 ## 许可证
 
