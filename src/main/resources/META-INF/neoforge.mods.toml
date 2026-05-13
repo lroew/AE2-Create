@@ -7,18 +7,32 @@ modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
 description='''
-AE2 Create Compat - Applied Energistics 2 与 Create (机械动力) 的自动化兼容 Mod。
+AE2 Create Compat v2.0 - Applied Energistics 2 × Create (机械动力) 自动化兼容 Mod。
 
 主要功能：
-- ME Exporter: 从 AE2 ME 网络导出物品到 Create 管道/传送带
-- ME Importer: 从 Create 管道/传送带导入物品到 AE2 ME 网络
-- ME Pattern Provider: 通过 Create 设备驱动 AE2 的自动化合成
+- ME Exporter: 从 ME 网络导出物品到 Create 设备
+- ME Importer: 从 Create 设备导入物品到 ME 网络
+- ME Pattern Provider: 通过 Create 设备驱动 AE2 自动合成
+- ME Stock Keeper: 监控 ME 网络库存，红石信号控制 Create 设备
 
-支持 Create 设备：
-- 传送带 (Belt) - 物品传输
-- 机械臂 (Mechanical Arm) - 物品分配
-- 漏斗 (Chute) - 垂直传输
-- 发射器 (Deployer) - 模拟交互
+兼容的 Create 6.0+ 设备 (18+ 种)：
+物流: 传送带、机械臂、漏斗、智能漏斗、物品保险库、转运车、发射器
+加工: 滚筒、混合器、切割机、烘干架、密封风扇、装配器、翻滚漏斗
+轨道: 火车、火车站、火车信号灯
+控制: 显示板、红石链接
+
+Create 附属 mod 支持：
+- Create: Electric Trains (电动列车)
+- Create: Copycats+ (模拟方块)
+
+Features:
+- ME Exporter: Export items from ME network to Create devices
+- ME Importer: Import items from Create devices into ME network
+- ME Pattern Provider: Bridge AE2 autocrafting with Create processing
+- ME Stock Keeper: Monitor ME stock levels with redstone output
+
+Supports 18+ Create 6.0+ devices and addon mods.
+Bilingual: English / 中文
 '''
 
 [[dependencies.${mod_id}]]
@@ -35,17 +49,17 @@ versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"
 
-# AE2 作为软依赖（可选但功能需要）
+# AE2 - required for core functionality
 [[dependencies.${mod_id}]]
-    modId="ae2"
-    type="optional"
-    ordering="AFTER"
-    side="BOTH"
+modId="ae2"
+type="required"
+ordering="AFTER"
+side="BOTH"
 
-# Create 作为软依赖（可选但功能需要）
+# Create 6.0+ - required for core functionality
 [[dependencies.${mod_id}]]
-    modId="create"
-    type="required"
-    versionRange="[6.0.10,6.1.0)"
-    ordering="NONE"
-    side="BOTH"
+modId="create"
+type="required"
+versionRange="[6.0.0,)"
+ordering="NONE"
+side="BOTH"
