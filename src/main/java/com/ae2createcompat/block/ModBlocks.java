@@ -9,9 +9,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -139,7 +140,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_exporter.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_exporter.tooltip.compat"));
         }
@@ -184,7 +185,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_importer.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_importer.tooltip.compat"));
         }
@@ -229,7 +230,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_pattern_provider.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_pattern_provider.tooltip.compat"));
         }
@@ -274,7 +275,7 @@ public class ModBlocks {
         }
 
         @Override
-        public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.translatable("block.ae2createcompat.me_stock_keeper.tooltip"));
             tooltip.add(Component.translatable("block.ae2createcompat.me_stock_keeper.tooltip.compat"));
         }
